@@ -3,11 +3,19 @@
   <h2>Chess</h2>
   <h3>{{message}}</h3>
   <div style="text-align: center;">
-    <div v-for="line, i in string.split('\n')">
-      <div v-for="square, i in line" style="flex-direction: row;" class="case">
-        <!-- {{square}} -->
+    <h2 v-if="chess.game_over()">FINI</h2> {{chess.turn()}}
+    <div style="display: flex;">
+      <div v-for="move, i in chess.moves()" style="flex-direction: row;">
+        <button @click="socket.emit('play', move)">{{move}}</button>
       </div>
-      {{line}}
+    </div>
+    <div style="font-family: monospace; whitespace: pre;">
+      <div v-for="line, i in string.split('\n')">
+        <div v-for="square, i in line" style="flex-direction: row;" class="case">
+          <!-- {{square}} -->
+        </div>
+        {{line}}
+      </div>
     </div>
     <input type="text" v-model="move"></input>
     <button @click="send()">Send</button>
