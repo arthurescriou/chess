@@ -90,16 +90,17 @@ io.on('connection', (socket) => {
         games
         .filter(game => game.players.w.localeCompare(uuid)===0 || game.players.b.localeCompare(uuid)===0)
         .forEach(game => {
-          if(checkTurn(uuid, game))
-          game.chess.move(move)
-          sessionGame(game)
-          .forEach(session => {
-            if(session.gid===gid){
-              session.socket.emit('chess', game.chess.fen())
-            }else {
-              session.socket.emit('pool', poolUser(session.uuid))
-            }
-          })
+          if (checkTurn(uuid, game)) {
+              game.chess.move(move)
+              sessionGame(game)
+                  .forEach(session => {
+                      if (session.gid === gid) {
+                          session.socket.emit('chess', game.chess.fen())
+                      } else {
+                          session.socket.emit('pool', poolUser(session.uuid))
+                      }
+                  })
+          }
         })
 
     });
