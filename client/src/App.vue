@@ -1,52 +1,95 @@
 <template>
 <div id="app">
   <h2>Chess</h2>
-  <h3>{{message}}</h3>
-  <div style="text-align: center;">
-    <h2 v-if="chess.game_over()">FINI</h2> {{chess.turn()}}
-    <div style="display: flex;">
-      <div v-for="move, i in chess.moves()" style="flex-direction: row;">
-        <button @click="socket.emit('play', move)">{{move}}</button>
+  <div v-if="connected">
+    <button @click="disconnect">Disconnect</button>
+    <div v-if="outgame">
+      <button @click="newGame">New game</button>
+      <div v-for="game in games" style="display: flex;">
+        <a @click='enterGame(game)'style="flex-direction: row;">
+          <h5>{{game.gid}}</h5>
+          {{turn(game)}}
+        </a>
       </div>
     </div>
-    <div v-for="line, i in string.split('\n')">
-      <div style="font-family: monospace; whitespace: pre;">
-        {{line}}
-      </div>
+    <div v-else>
+      <button @click="exitGame()">Back</button>
+      <Game :uuid='uuid' :socket='socket' :gid='gid'></Game>
     </div>
-    <input type="text" v-model="move"></input>
-    <button @click="send()">Send</button>
+  </div>
+  <div v-else>
+    <Login v-on:connected="connect"></Login>
   </div>
 </div>
 </template>
 
 <script>
-import Chess from 'chess.js'
+import Login from './pages/Login'
+import Game from './pages/Game'
 const io = require('socket.io-client')
+
+import Chess from 'chess.js'
 
 export default {
   name: 'app',
   mounted() {
-    let socket = io.connect('http://localhost:3000')
-    this.socket = socket
-    socket.on('chess', (chess) => {
-      this.chess.load(chess)
-      this.string = this.chess.ascii()
-    })
+    this.socket = io.connect('http://localhost:3000')
   },
   data() {
     return {
+      outgame: true,
+      games: [],
+      connected: false,
       string: '',
-      chess: new Chess(),
-      message: 'placeholder',
+      message: '',
       socket: null,
-      move: ''
+      login: '',
+      gid: 0,
+      uuid: ''
     }
   },
   methods: {
-    send() {
-      this.socket.emit('play', this.move)
+    turn(game){
+      console.log(game.chess);
+      return new Chess(game.chess).turn()
+    },
+    exitGame(){
+      this.gid = 0
+      this.outgame = true
+    },
+    enterGame(game){
+      this.gid = game.gid
+      this.outgame = false
+      console.log(game.gid);
+    },
+    newGame() {
+      this.socket.emit('new-game', {
+        uuid: this.uuid,
+        invitation: 'other'
+      })
+    },
+    disconnect() {
+      console.log('disconnect');
+      this.connected = false
+    },
+    connect(param) {
+      console.log('connect', param.login);
+      this.login = param.login
+      this.uuid = param.uuid
+      this.connected = true
+      const zis = this
+      this.socket.on('pool', ret => {
+        console.log(ret);
+        zis.games = ret.pool
+      })
+      this.socket.emit('user', {
+        uuid: param.uuid
+      })
     }
+  },
+  components: {
+    Login,
+    Game
   }
 }
 </script>
