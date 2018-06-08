@@ -9,11 +9,8 @@
         <button @click="socket.emit('play', move)">{{move}}</button>
       </div>
     </div>
-    <div style="font-family: monospace; whitespace: pre;">
-      <div v-for="line, i in string.split('\n')">
-        <div v-for="square, i in line" style="flex-direction: row;" class="case">
-          <!-- {{square}} -->
-        </div>
+    <div v-for="line, i in string.split('\n')">
+      <div style="font-family: monospace; whitespace: pre;">
         {{line}}
       </div>
     </div>
