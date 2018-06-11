@@ -79,15 +79,17 @@ io.on('connection', (socket) => {
     socket.on('game', ({uuid, gid}) => {
         sessionUser(socket).gid = gid
         console.log('game', {uuid, gid});
-        games.filter(game => game.gid === gid && game.players.w.localeCompare(uuid) === 0 || game.players.b.localeCompare(uuid) === 0).forEach(game => {
+        games.filter(game => game.gid === gid && (game.players.w.localeCompare(uuid) === 0 || game.players.b.localeCompare(uuid) === 0)).forEach(game => {
+          console.log(uuid, game.gid);
           socket.emit('chess', game.chess.fen())
         })
     })
-
+    
 
     socket.on('play', ({uuid, gid, move}) => {
         console.log('move', {uuid, gid, move})
         games
+        .filter(game => game.gid === gid)
         .filter(game => game.players.w.localeCompare(uuid)===0 || game.players.b.localeCompare(uuid)===0)
         .forEach(game => {
           if (checkTurn(uuid, game)) {
@@ -96,9 +98,8 @@ io.on('connection', (socket) => {
                   .forEach(session => {
                       if (session.gid === gid) {
                           session.socket.emit('chess', game.chess.fen())
-                      } else {
-                          session.socket.emit('pool', poolUser(session.uuid))
                       }
+                      session.socket.emit('pool', poolUser(session.uuid))
                   })
           }
         })
