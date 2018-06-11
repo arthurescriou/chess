@@ -1,11 +1,12 @@
 <template>
 <div id="app">
-  <h2>Chess</h2>
-  <div v-if="connected">
+  <!-- <h2>Chess</h2> -->
+
+  <div v-if="$store.state.connected">
     <button @click="disconnect">Disconnect</button>
-    <div v-if="outgame">
-      <button @click="newGame">New game</button>
-      <div v-for="game in games" style="display: flex;">
+    <div v-if="$store.state.outgame">
+      <button @click="newGame()">New game</button>
+      <div v-for="game in $store.state.games" style="display: flex;">
         <a @click='enterGame(game)'style="flex-direction: row;">
           <h5>{{game.gid}}</h5>
           {{turn(game)}}
@@ -14,7 +15,7 @@
     </div>
     <div v-else>
       <button @click="exitGame()">Back</button>
-      <Game :uuid='uuid' :socket='socket' :gid='gid'></Game>
+      <Game></Game>
     </div>
   </div>
   <div v-else>
@@ -24,67 +25,40 @@
 </template>
 
 <script>
+import Store from './store/store.js';
+
 import Login from './pages/Login'
 import Game from './pages/Game'
-const io = require('socket.io-client')
 
 import Chess from 'chess.js'
 
 export default {
+  store: Store,
   name: 'app',
   mounted() {
-    this.socket = io.connect('http://localhost:3000')
+
   },
   data() {
-    return {
-      outgame: true,
-      games: [],
-      connected: false,
-      string: '',
-      message: '',
-      socket: null,
-      login: '',
-      gid: 0,
-      uuid: ''
-    }
+    return {}
   },
   methods: {
     turn(game){
-      console.log(game.chess);
       return new Chess(game.chess).turn()
     },
     exitGame(){
-      this.gid = 0
-      this.outgame = true
+      this.$store.commit('exitGame')
     },
     enterGame(game){
-      this.gid = game.gid
-      this.outgame = false
-      console.log(game.gid);
+      this.$store.commit('enterGame', game)
     },
     newGame() {
-      this.socket.emit('new-game', {
-        uuid: this.uuid,
-        invitation: 'other'
-      })
+      this.$store.commit('newGame', {invitation: 'other'})
     },
     disconnect() {
-      console.log('disconnect');
-      this.connected = false
+      this.$store.commit('disconnect')
     },
     connect(param) {
-      console.log('connect', param.login);
-      this.login = param.login
-      this.uuid = param.uuid
-      this.connected = true
-      const zis = this
-      this.socket.on('pool', ret => {
-        console.log(ret);
-        zis.games = ret.pool
-      })
-      this.socket.emit('user', {
-        uuid: param.uuid
-      })
+      this.$store.commit('connect', param)
     }
   },
   components: {

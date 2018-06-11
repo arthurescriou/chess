@@ -21,11 +21,11 @@ import Chess from 'chess.js'
 
 export default {
   mounted() {
-    this.socket.on('chess', (chess) => {
+    this.$store.state.socket.on('chess', (chess) => {
       this.chess.load(chess)
       this.string = this.chess.ascii()
     })
-    this.socket.emit('game', {uuid: this.uuid, gid: this.gid})
+    this.$store.state.socket.emit('game', {uuid: this.$store.state.uuid, gid: this.$store.state.gid})
   },
   data() {
     return {
@@ -36,21 +36,7 @@ export default {
   },
   methods: {
     send(move) {
-      this.socket.emit('play', {uuid: this.uuid, gid: this.gid, move})
-    }
-  },
-  props: {
-    socket: {
-      type: Object,
-      required: true
-    },
-    gid: {
-      type: Number,
-      required: true
-    },
-    uuid: {
-      type: String,
-      required: true
+      this.$store.state.socket.emit('play', {uuid: this.$store.state.uuid, gid: this.$store.state.gid, move})
     }
   }
 }
