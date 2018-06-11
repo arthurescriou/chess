@@ -18,8 +18,18 @@ const state = {
 }
 
 const mutations = {
+  pseudo(state, param) {
+    if (state.allUsers.filter(u => u.uuid.localeCompare(param.user.uuid) === 0).length === 0) {
+      state.allUsers.push(param.user)
+    }
+  },
   userConnected(state, users) {
     state.users = users
+    state.users.forEach(user => {
+      if (state.allUsers.filter(u => u.uuid.localeCompare(user.uuid) === 0).length === 0) {
+        state.allUsers.push(user)
+      }
+    })
   },
   connect(state, param) {
     state.socket = io.connect('http://localhost:3000')
@@ -27,6 +37,14 @@ const mutations = {
     state.uuid = param.uuid
     state.connected = true
     state.socket.on('pool', ret => {
+      ret.pool.forEach(game => {
+        const players = [game.players.w, game.players.b]
+        players.filter(uuid =>
+          !state.allUsers
+            .map(user => user.uuid).includes(uuid))
+            .forEach(uuid => state.socket.emit('pseudo', {uuid}))
+
+      })
       state.games = ret.pool
     })
     state.socket.emit('user', {
@@ -40,24 +58,25 @@ const mutations = {
         }
       }))
     })
+    state.socket.on('pseudo', (param) => {
+      store.commit('pseudo', param)
+    })
   },
   disconnect(state) {
     state.socket.disconnect()
     state.connected = false
   },
   newGame(state, param) {
-    //uuid of other player
-    const other = param.invitation
     state.socket.emit('new-game', {
       uuid: state.uuid,
-      invitation: other
+      invitation: param.invitation
     })
   },
   enterGame(state, game) {
     state.gid = game.gid
     state.outgame = false
   },
-  exitGame(state){
+  exitGame(state) {
     state.gid = 0
     state.outgame = true
   }

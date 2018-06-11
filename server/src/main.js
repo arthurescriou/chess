@@ -143,6 +143,10 @@ io.on('connection', (socket) => {
         socket.emit('allUsers', {listUsers})
     });
 
-
+    socket.on('pseudo', ({uuid}) => {
+      users.filter(u => u.uuid.localeCompare(uuid)===0).forEach(user => {
+        socket.emit('pseudo', {user})
+      })
+    });
 
 });
