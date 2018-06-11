@@ -11,11 +11,16 @@ const state = {
   gid: 0,
   games: [],
   outgame: true,
-  login: ''
+  login: '',
+  users: [],
+  allUsers: []
 
 }
 
 const mutations = {
+  userConnected(state, users) {
+    state.users = users
+  },
   connect(state, param) {
     state.socket = io.connect('http://localhost:3000')
     state.login = param.login
@@ -26,6 +31,14 @@ const mutations = {
     })
     state.socket.emit('user', {
       uuid: param.uuid
+    })
+    state.socket.on('listUsers', param => {
+      store.commit('userConnected', param.listUsers.map(user => {
+        return {
+          pseudo: user.login,
+          uuid: user.uuid
+        }
+      }))
     })
   },
   disconnect(state) {

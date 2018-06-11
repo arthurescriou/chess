@@ -8,7 +8,24 @@ const Chess = require('chess.js').Chess;
 const games = []
 let idCpt = 0
 let sessions = []
+const users = [
+  {
+    login: 'Potam',
+    uuid: 'admin'
+  },
+  {
+    login: 'Loulou',
+    uuid: 'other'
+  }
+]
 
+app.get('/', function(req, res) {
+  res.send(
+    {
+      games: games.map(game => Object.keys(game).filter(key => key.localeCompare('chess')!==0).map(key=>game[key])),
+      sessions: sessions.map(session =>  Object.keys(session).filter(key => key.localeCompare('socket')!==0).map(key=>session[key]))
+     });
+});
 
 const checkTurn = (uuid, game) => {
     return game.players[game.chess.turn()].localeCompare(uuid) === 0
@@ -49,12 +66,26 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
         console.log('user disconnected: ', host)
         sessions = sessions.filter(session => session.socket!==socket)
+        sessions.forEach(session => {
+          const uuids = sessions.map(session => session.uuid)
+          console.log(uuids, session.uuid);
+          const listUsers = users.filter(user => uuids.includes(user.uuid))
+          console.log(listUsers);
+          session.socket.emit('listUsers', {listUsers})
+        })
     });
 
     socket.on('user', ({uuid}) => {
         sessions.push({uuid, socket, gid: -1})
         console.log(uuid);
         socket.emit('pool', poolUser(uuid))
+        sessions.forEach(session => {
+          const uuids = sessions.map(session => session.uuid)
+          console.log(uuids, session.uuid);
+          const listUsers = users.filter(user => uuids.includes(user.uuid))
+          console.log(listUsers);
+          session.socket.emit('listUsers', {listUsers})
+        })
     });
 
 
@@ -84,7 +115,7 @@ io.on('connection', (socket) => {
           socket.emit('chess', game.chess.fen())
         })
     })
-    
+
 
     socket.on('play', ({uuid, gid, move}) => {
         console.log('move', {uuid, gid, move})
@@ -105,5 +136,13 @@ io.on('connection', (socket) => {
         })
 
     });
+
+    socket.on('allUsers', () => {
+      console.log('allUsers')
+      let listUsers = users
+        socket.emit('allUsers', {listUsers})
+    });
+
+
 
 });

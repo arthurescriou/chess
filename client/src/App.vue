@@ -1,15 +1,18 @@
 <template>
 <div id="app">
   <!-- <h2>Chess</h2> -->
-
   <div v-if="$store.state.connected">
     <button @click="disconnect">Disconnect</button>
     <div v-if="$store.state.outgame">
       <button @click="newGame()">New game</button>
-      <div v-for="game in $store.state.games" style="display: flex;">
-        <a @click='enterGame(game)'style="flex-direction: row;">
-          <h5>{{game.gid}}</h5>
-          {{turn(game)}}
+      <div v-for="game in $store.state.games">
+        <a @click='enterGame(game)'>
+          <h5 style="display: flex;">
+            <div style="flex-direction: row;">Game #{{game.gid}}</div>
+            <div style="flex-direction: row; margin-left: 30px;">
+              {{turn(game)}}
+            </div>
+          </h5>
         </a>
       </div>
     </div>
@@ -17,6 +20,7 @@
       <button @click="exitGame()">Back</button>
       <Game></Game>
     </div>
+    <Users></Users>
   </div>
   <div v-else>
     <Login v-on:connected="connect"></Login>
@@ -28,6 +32,7 @@
 import Store from './store/store.js';
 
 import Login from './pages/Login'
+import Users from './pages/Users'
 import Game from './pages/Game'
 
 import Chess from 'chess.js'
@@ -42,17 +47,19 @@ export default {
     return {}
   },
   methods: {
-    turn(game){
-      return new Chess(game.chess).turn()
+    turn(game) {
+      return game.players[new Chess(game.chess).turn()]
     },
-    exitGame(){
+    exitGame() {
       this.$store.commit('exitGame')
     },
-    enterGame(game){
+    enterGame(game) {
       this.$store.commit('enterGame', game)
     },
     newGame() {
-      this.$store.commit('newGame', {invitation: 'other'})
+      this.$store.commit('newGame', {
+        invitation: 'other'
+      })
     },
     disconnect() {
       this.$store.commit('disconnect')
@@ -63,7 +70,8 @@ export default {
   },
   components: {
     Login,
-    Game
+    Game,
+    Users
   }
 }
 </script>
