@@ -18,6 +18,16 @@ const state = {
 }
 
 const mutations = {
+  pool(state, ret){
+    ret.pool.forEach(game => {
+      const players = [game.players.w, game.players.b]
+      players.filter(uuid =>
+              !state.allUsers
+                .map(user => user.uuid).includes(uuid))
+                .forEach(uuid => state.socket.emit('pseudo', {uuid}))
+    })
+    state.games = ret.pool
+  },
   pseudo(state, param) {
     if (state.allUsers.filter(u => u.uuid.localeCompare(param.user.uuid) === 0).length === 0) {
       state.allUsers.push(param.user)
@@ -26,9 +36,7 @@ const mutations = {
   userConnected(state, users) {
     state.users = users
     state.users.forEach(user => {
-      if (state.allUsers.filter(u => u.uuid.localeCompare(user.uuid) === 0).length === 0) {
-        state.allUsers.push(user)
-      }
+      store.commit('pseudo', {user: {uuid: user.uuid, login: user.pseudo}})
     })
   },
   connect(state, param) {
@@ -36,17 +44,7 @@ const mutations = {
     state.login = param.login
     state.uuid = param.uuid
     state.connected = true
-    state.socket.on('pool', ret => {
-      ret.pool.forEach(game => {
-        const players = [game.players.w, game.players.b]
-        players.filter(uuid =>
-          !state.allUsers
-            .map(user => user.uuid).includes(uuid))
-            .forEach(uuid => state.socket.emit('pseudo', {uuid}))
-
-      })
-      state.games = ret.pool
-    })
+    state.socket.on('pool', ret => store.commit('pool', ret))
     state.socket.emit('user', {
       uuid: param.uuid
     })

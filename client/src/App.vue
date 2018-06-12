@@ -48,7 +48,13 @@ export default {
   },
   methods: {
     turn(game) {
-      return game.players[new Chess(game.chess).turn()]
+      const uuid = game.players[new Chess(game.chess).turn()]
+      const ret = this.$store.state.allUsers.filter(user => user.uuid.localeCompare(uuid) === 0)
+      if(ret.length === 1){
+        return ret[0].login
+      } else {
+        state.socket.emit('pseudo', {uuid})
+      }
     },
     exitGame() {
       this.$store.commit('exitGame')

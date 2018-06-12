@@ -68,9 +68,7 @@ io.on('connection', (socket) => {
         sessions = sessions.filter(session => session.socket!==socket)
         sessions.forEach(session => {
           const uuids = sessions.map(session => session.uuid)
-          console.log(uuids, session.uuid);
           const listUsers = users.filter(user => uuids.includes(user.uuid))
-          console.log(listUsers);
           session.socket.emit('listUsers', {listUsers})
         })
     });
@@ -81,9 +79,7 @@ io.on('connection', (socket) => {
         socket.emit('pool', poolUser(uuid))
         sessions.forEach(session => {
           const uuids = sessions.map(session => session.uuid)
-          console.log(uuids, session.uuid);
           const listUsers = users.filter(user => uuids.includes(user.uuid))
-          console.log(listUsers);
           session.socket.emit('listUsers', {listUsers})
         })
     });
