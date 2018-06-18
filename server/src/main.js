@@ -1,7 +1,10 @@
 const app = require('express')();
 const http = require('http').Server(app);
 
+const jwt = require('jsonwebtoken')
+
 const io = require('socket.io')(http);
+const WebSocket = require('ws')
 
 const Chess = require('chess.js').Chess;
 
@@ -11,7 +14,7 @@ let sessions = []
 const users = [
   {
     login: 'Potam',
-    uuid: 'admin'
+    uuid: 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1dWlkIjoiYTBkYjY5MjgtOWQxYS00YWI0LTg5ZjItMDBlNTZmNGI3OGNmIiwiaWF0IjoxNTI5MzM0MDYxLCJleHAiOjE1Mjk0MjA0NjF9.jBlquo9nVxn4_NAp8IQj3BvLDqGTNq6F-0J117ZZGLT_ox4aTXrsA4pMqcf7XjlyC7p_uJgT6l9XF9AZ2_glZaQp-8NWbNUXdeNizcHeZ3YTU0XsfFdpiEl3ynJL5FnjUt3rwZioSEFo2oFfiVXghYKc5SiIT32biBO1FQX-Lq8cRpNwK8I__kVoWz3Kecz6ozMJnXn_tPixl-zLbICgdCqyI48dWz5aUi7pBXHOTuMe15gkxZVzmP9rLV-PGeg7mrQ-eIoGm566-W5IW497mr22y-iBLxZSVfNMZ7cd4Iqv6oRJS3BFdy8z4M2lz12TckMrBJeJYM52jmdNq-EuY8VFMWUSVC29fFz6KDc5zZ1G0gx5KFYN_D5XLHCbteHT-AGJjdlVqoye-t7dY-DAFNJNSE00cRVoV1SqXI4EqiQs2YMA9kDb7xr3Ln5eBJ79dP4fCWqN6zXvpkDxK2tWPQ2kbmK8tAwvUpaTAAeME4-caWRDMPt4IT_solcyguoq-JdlA-ZyRVI7aIBfMMGsqo4XEsV9WDhfX4wMXPX_upKj9ttBtSCHKFYs1hqFL77L_YWaARqqrLuZSf9frjqBByfaeMQCdslecblFIyoAy8ecSJvlqrAd0AHP1KjNgXpHkDJ3_MyaBFhvtupcWxiQtnzAekTfoeTYt61ya8rK4Sg'
   },
   {
     login: 'Loulou',
@@ -19,11 +22,15 @@ const users = [
   }
 ]
 
+
 app.get('/', function(req, res) {
+  const merger =
   res.send(
     {
-      games: games.map(game => Object.keys(game).filter(key => key.localeCompare('chess')!==0).map(key=>game[key])),
-      sessions: sessions.map(session =>  Object.keys(session).filter(key => key.localeCompare('socket')!==0).map(key=>session[key]))
+      games: games.map(game => Object.keys(game).filter(key => key.localeCompare('chess')!==0).map(key=>{return {key: game[key]}}))
+      .reduce((o1, o2) => Object.assign(o1, o2), {}),
+      sessions: sessions.map(session =>  Object.keys(session).filter(key => key.localeCompare('socket')!==0).map(key=>{return {key: session[key]}}))
+      .reduce((o1, o2) => Object.assign(o1, o2), {})
      });
 });
 
@@ -56,8 +63,8 @@ const poolUser = (uuid) => {
     }
 }
 
-http.listen(3000, () => {
-    console.log('listening on port 3000');
+http.listen(3500, () => {
+    console.log('Chess server\nlistening on port 3500');
 });
 
 io.on('connection', (socket) => {
@@ -73,9 +80,38 @@ io.on('connection', (socket) => {
         })
     });
 
+    socket.on('auth', ({email, password, stayConnected}) => {
+        console.log('auth', email);
+        let ws = new WebSocket('ws://localhost:3000', {
+            perMessageDeflate: false
+        })
+        ws.on('message', res => {
+          const response = JSON.parse(res)
+            if(socket.id.localeCompare(response.sender) === 0){
+              Object.keys(response).filter(key => key.localeCompare('error')===0 || key.localeCompare('result')===0).forEach(key => socket.emit('auth', response[key]))
+
+            }else{
+              console.error('Wrong sender', response.sender)
+            }
+        })
+        ws.on('open', () => {
+            const message = {
+                version: '1.0.0',
+                method: 'signin',
+                sender: socket.id,
+                params: {
+                    email,
+                    password,
+                    stayConnected
+                }
+            }
+            ws.send(JSON.stringify(message))
+        })
+    })
+
     socket.on('user', ({uuid}) => {
+      console.log('user', uuid);
         sessions.push({uuid, socket, gid: -1})
-        console.log(uuid);
         socket.emit('pool', poolUser(uuid))
         sessions.forEach(session => {
           const uuids = sessions.map(session => session.uuid)

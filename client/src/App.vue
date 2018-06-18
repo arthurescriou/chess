@@ -23,7 +23,7 @@
     <Users></Users>
   </div>
   <div v-else>
-    <Login v-on:connected="connect"></Login>
+    <Login></Login>
   </div>
 </div>
 </template>
@@ -69,9 +69,6 @@ export default {
     },
     disconnect() {
       this.$store.commit('disconnect')
-    },
-    connect(param) {
-      this.$store.commit('connect', param)
     }
   },
   components: {

@@ -2,7 +2,8 @@
 <div class="login-container">
   <form @submit.prevent="auth()">
     <input type="text" v-model="login"></input>
-    <input type="text" v-model="password"></input>
+    <input type="password" v-model="password"></input>
+    <input type="checkbox" v-model="stayConnected"></input>
     <input type="submit" @click="" value="connect"></input>
   </form>
 </div>
@@ -14,14 +15,15 @@ export default {
     return {
       login: '',
       password: '',
+      stayConnected: false
     }
   },
   methods: {
     auth() {
-      const login = this.login
-      this.$emit('connected', {
-        login,
-        uuid: this.password
+      this.$store.commit('connect', {
+        email: this.login,
+        password: this.password,
+        stayConnected: this.stayConnected
       })
     }
   }

@@ -13,7 +13,8 @@ const state = {
   outgame: true,
   login: '',
   users: [],
-  allUsers: []
+  allUsers: [],
+  error: ''
 
 }
 
@@ -40,13 +41,24 @@ const mutations = {
     })
   },
   connect(state, param) {
-    state.socket = io.connect('http://localhost:3000')
-    state.login = param.login
-    state.uuid = param.uuid
-    state.connected = true
-    state.socket.on('pool', ret => store.commit('pool', ret))
-    state.socket.emit('user', {
-      uuid: param.uuid
+    state.socket = io.connect('http://localhost:3500')
+    // state.uuid = param.uuid
+    state.socket.emit('auth', param)
+    state.socket.on('auth', ret => {
+      console.log(ret);
+      if (Object.keys(ret).includes('error')) {
+        state.error = ret.error
+      } else {
+        state.login = param.email
+        state.uuid = ret.uuid
+        state.connected = true
+        state.socket.emit('user', {
+          uuid: ret.uuid
+        })
+      }
+    })
+    state.socket.on('pool', ret => {
+      state.games = ret.pool
     })
     state.socket.on('listUsers', param => {
       store.commit('userConnected', param.listUsers.map(user => {
