@@ -24,13 +24,20 @@ const users = [
 
 
 app.get('/', function(req, res) {
-  const merger =
   res.send(
     {
-      games: games.map(game => Object.keys(game).filter(key => key.localeCompare('chess')!==0).map(key=>{return {key: game[key]}}))
-      .reduce((o1, o2) => Object.assign(o1, o2), {}),
-      sessions: sessions.map(session =>  Object.keys(session).filter(key => key.localeCompare('socket')!==0).map(key=>{return {key: session[key]}}))
-      .reduce((o1, o2) => Object.assign(o1, o2), {})
+      games: games.map(game => {
+        let niouGame = {}
+        niouGame.gid = game.gid
+        niouGame.players = game.players
+        return niouGame
+      }),
+      sessions: sessions.map(session =>{
+        let niouSession = {}
+        niouSession.uuid = session.uuid
+        niouSession.gid = session.gid
+        return niouSession
+      })
      });
 });
 
@@ -89,7 +96,6 @@ io.on('connection', (socket) => {
           const response = JSON.parse(res)
             if(socket.id.localeCompare(response.sender) === 0){
               Object.keys(response).filter(key => key.localeCompare('error')===0 || key.localeCompare('result')===0).forEach(key => socket.emit('auth', response[key]))
-
             }else{
               console.error('Wrong sender', response.sender)
             }
@@ -111,13 +117,13 @@ io.on('connection', (socket) => {
 
     socket.on('user', ({uuid}) => {
       console.log('user', uuid);
-        sessions.push({uuid, socket, gid: -1})
-        socket.emit('pool', poolUser(uuid))
-        sessions.forEach(session => {
-          const uuids = sessions.map(session => session.uuid)
-          const listUsers = users.filter(user => uuids.includes(user.uuid))
-          session.socket.emit('listUsers', {listUsers})
-        })
+      sessions.push({uuid, socket, gid: -1})
+      socket.emit('pool', poolUser(uuid))
+      sessions.forEach(session => {
+        const uuids = sessions.map(session => session.uuid)
+        const listUsers = users.filter(user => uuids.includes(user.uuid))
+        session.socket.emit('listUsers', {listUsers})
+      })
     });
 
 
@@ -176,6 +182,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('pseudo', ({uuid}) => {
+      console.log('ici',uuid);
       users.filter(u => u.uuid.localeCompare(uuid)===0).forEach(user => {
         socket.emit('pseudo', {user})
       })
