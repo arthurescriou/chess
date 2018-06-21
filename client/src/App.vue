@@ -53,8 +53,8 @@ export default {
       if(ret.length === 1){
         return ret[0].login
       } else {
+        this.$store.state.socket.emit('pseudo', {uuid})
         return 'unknown'
-        // this.$store.state.socket.emit('pseudo', {uuid})
       }
     },
     exitGame() {

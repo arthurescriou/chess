@@ -42,7 +42,6 @@ const mutations = {
   },
   connect(state, param) {
     state.socket = io.connect('http://localhost:3500')
-    // state.uuid = param.uuid
     state.socket.emit('auth', param)
     state.socket.on('auth', ret => {
       console.log(ret);
@@ -52,6 +51,7 @@ const mutations = {
         state.login = param.email
         state.uuid = ret.uuid
         state.connected = true
+        store.commit('pseudo', {user: {uuid: ret.uuid, login: param.email}})
         state.socket.emit('user', {
           uuid: ret.uuid
         })
@@ -63,8 +63,9 @@ const mutations = {
     state.socket.on('listUsers', param => {
       store.commit('userConnected', param.listUsers.map(user => {
         return {
-          pseudo: user.login,
-          uuid: user.uuid
+          login: user.login,
+          uuid: user.uuid,
+          pseudo: user.pseudo,
         }
       }))
     })
