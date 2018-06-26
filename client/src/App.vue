@@ -23,7 +23,7 @@
     <Users></Users>
   </div>
   <div v-else>
-    <Login v-on:connected="connect"></Login>
+    <Login></Login>
   </div>
 </div>
 </template>
@@ -48,7 +48,14 @@ export default {
   },
   methods: {
     turn(game) {
-      return game.players[new Chess(game.chess).turn()]
+      const uuid = game.players[new Chess(game.chess).turn()]
+      const ret = this.$store.state.allUsers.filter(user => user.uuid.localeCompare(uuid) === 0)
+      if(ret.length === 1){
+        return ret[0].login
+      } else {
+        this.$store.state.socket.emit('pseudo', {uuid})
+        return 'unknown'
+      }
     },
     exitGame() {
       this.$store.commit('exitGame')
@@ -58,14 +65,11 @@ export default {
     },
     newGame() {
       this.$store.commit('newGame', {
-        invitation: 'other'
+        invitation: 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1dWlkIjoiNGJhZDAyOTctNmE2NC00ZDZhLTliNzctMDQ4OWY1MmU3NTA4IiwiaWF0IjoxNTI5MzM2NzA2LCJleHAiOjE1Mjk0MjMxMDZ9.nxXtgKxOYPUHDGchPezcHhVrvvFxcrBLDOZk2VErpti7oBmlRheDNrud8j_6qEy77Qk8hh1LbsxizwTaTg-EL2L9usZ1nCthrB2bxpgBOVYRYpJmcAtYQ8MPsBotC66fMEQc6WEUtlt_dfozV2XRIhJ5cY1klXJGXBIeriQmOQ-RCnJW28onHoJoGX_GpVXqneDwOJ2hOe0Fpieliur8ECYLD7a_K-H1Mwnl21DZtY9TefqcascDb4mMYLH7dxZ4iOwrXJjD9TRgGMewjDFbVSKvH7uU3f9PkVStqoRGsVUjstpzJ27e96mCPDdsCN7f_Q_khwsO_vkpPq0Fds7HOAIo4hNuX6iXWwPhcUi9YJq8ImWeXtI4ImZT6ufN8aFiLlOJWD48odmANKjHDLyVHvr-VXzvVGGsga1YygVMonEcmzz3rQX1siQjSwv8kO54sLHByj15rpuciPzhhYieBJtFf3JdoD4_XFn5_njK5rM0vVdPLTH07ltaIdnt5wwz935jgjq0KuS4Jfv48N9e-451ai2aVNgJrL91noGI850Vm-rRzj34w_OUBHhPzQrFiPP6JkPnXjfsGGq3LdkxK5Ax7pdybtuoRZmsZAEm0sziEjiE9AcKkuxoQmjY6UpeeRy8qGTg6xpxRPdYwDiEYFvr38eJWIc9QBn6fOkll2E'
       })
     },
     disconnect() {
       this.$store.commit('disconnect')
-    },
-    connect(param) {
-      this.$store.commit('connect', param)
     }
   },
   components: {

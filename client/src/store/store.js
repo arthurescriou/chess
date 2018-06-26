@@ -13,11 +13,22 @@ const state = {
   outgame: true,
   login: '',
   users: [],
-  allUsers: []
+  allUsers: [],
+  error: ''
 
 }
 
 const mutations = {
+  pool(state, ret){
+    ret.pool.forEach(game => {
+      const players = [game.players.w, game.players.b]
+      players.filter(uuid =>
+              !state.allUsers
+                .map(user => user.uuid).includes(uuid))
+                .forEach(uuid => state.socket.emit('pseudo', {uuid}))
+    })
+    state.games = ret.pool
+  },
   pseudo(state, param) {
     if (state.allUsers.filter(u => u.uuid.localeCompare(param.user.uuid) === 0).length === 0) {
       state.allUsers.push(param.user)
@@ -26,35 +37,35 @@ const mutations = {
   userConnected(state, users) {
     state.users = users
     state.users.forEach(user => {
-      if (state.allUsers.filter(u => u.uuid.localeCompare(user.uuid) === 0).length === 0) {
-        state.allUsers.push(user)
-      }
+      store.commit('pseudo', {user: {uuid: user.uuid, login: user.pseudo}})
     })
   },
   connect(state, param) {
-    state.socket = io.connect('http://localhost:3000')
-    state.login = param.login
-    state.uuid = param.uuid
-    state.connected = true
-    state.socket.on('pool', ret => {
-      ret.pool.forEach(game => {
-        const players = [game.players.w, game.players.b]
-        players.filter(uuid =>
-          !state.allUsers
-            .map(user => user.uuid).includes(uuid))
-            .forEach(uuid => state.socket.emit('pseudo', {uuid}))
-
-      })
-      state.games = ret.pool
+    state.socket = io.connect('http://localhost:3500')
+    state.socket.emit('auth', param)
+    state.socket.on('auth', ret => {
+      console.log(ret);
+      if (Object.keys(ret).includes('error')) {
+        state.error = ret.error
+      } else {
+        state.login = param.email
+        state.uuid = ret.uuid
+        state.connected = true
+        store.commit('pseudo', {user: {uuid: ret.uuid, login: param.email}})
+        state.socket.emit('user', {
+          uuid: ret.uuid
+        })
+      }
     })
-    state.socket.emit('user', {
-      uuid: param.uuid
+    state.socket.on('pool', ret => {
+      state.games = ret.pool
     })
     state.socket.on('listUsers', param => {
       store.commit('userConnected', param.listUsers.map(user => {
         return {
-          pseudo: user.login,
-          uuid: user.uuid
+          login: user.login,
+          uuid: user.uuid,
+          pseudo: user.pseudo,
         }
       }))
     })
