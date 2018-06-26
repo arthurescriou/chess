@@ -77,15 +77,8 @@ export default {
 </script>
 
 <style>
-.wrapper {
-  display: grid;
-  grid-template-columns: repeat(1, 1fr);
-  grid-gap: 10px;
-  grid-auto-rows: minmax(100px, auto);
-}
+body {
+font-family: "code";
 
-.case {
-  grid-column: 1;
-  grid-row: 1;
 }
 </style>
